@@ -28,30 +28,35 @@
 //   die;
 // }
 
-if (!array_key_exists('HTTP_X_TOKEN', $_SERVER)){
-  die;
-}
 
-$url = 'http://localhost:8001';
+// TOKEN AUTHENTICATION
+// if (!array_key_exists('HTTP_X_TOKEN', $_SERVER)){
+//   http_response_code(400);
+//   die;
+// }
 
-$ch = curl_init($url);
-curl_setopt(
-  $ch,
-  CURLOPT_HTTPHEADER,
-  [
-    "X-TOKEN: {$_SERVER['HTTP_X_TOKEN']}"
-  ]
-);
-curl_setopt(
-  $ch,
-  CURLOPT_RETURNTRANSFER,
-  true
-);
-$ret = curl_exec($ch);
+// $url = 'http://localhost:8001';
 
-if ($ret !== 'true') {
-  die;
-}
+// $ch = curl_init($url);
+// curl_setopt(
+//   $ch,
+//   CURLOPT_HTTPHEADER,
+//   [
+//     "X-TOKEN: {$_SERVER['HTTP_X_TOKEN']}"
+//   ]
+// );
+// curl_setopt(
+//   $ch,
+//   CURLOPT_RETURNTRANSFER,
+//   true
+// );
+// $ret = curl_exec($ch);
+
+// if ($ret !== 'true') {
+//   die;
+// }
+
+
 // Definimos los recursos disponibles
 $allowedResourceTypes = [
   'books',
@@ -63,6 +68,7 @@ $allowedResourceTypes = [
 $resourceType = $_GET['resource_type'];
 
 if (!in_array($resourceType, $allowedResourceTypes)) {
+  http_response_code(400);
   die;
 }
 // Defino los recursos
@@ -91,15 +97,17 @@ header('Content-Type: application/json');
 $resourceId = array_key_exists('resource_id', $_GET) ? $_GET['resource_id']: '';
 // Generamos la respuesta asumiendo que el pedido es correcto
 switch(strtoupper($_SERVER['REQUEST_METHOD'])) {
-  case GET:
+  case 'GET':
     if (empty($resourceId))
       echo json_encode($books);
     else {
       if (array_key_exists($resourceId, $books))
         echo json_encode($books[$resourceId]);
+      else
+        http_response_code(404);
     }    
     break;
-  case POST:
+  case 'POST':
      $json = file_get_contents('php://input');
 
      $books[] = json_decode ($json, true);
@@ -108,7 +116,7 @@ switch(strtoupper($_SERVER['REQUEST_METHOD'])) {
      echo json_encode($books);
 
     break;
-  case PUT:
+  case 'PUT':
     // validamos que el recurso buscado exista
     if(!empty($resourceId) && array_key_exists($resourceId, $books)){
       $json = file_get_contents('php://input');
@@ -116,7 +124,7 @@ switch(strtoupper($_SERVER['REQUEST_METHOD'])) {
       echo json_encode($books);
     }
     break;
-  case DELETE:
+  case 'DELETE':
     if (!empty($resourceId && array_key_exists($resourceId, $books))){
       unset($books[$resourceId]) ;
       echo json_encode($books);
